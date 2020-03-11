@@ -71,6 +71,42 @@ def build_impala_cnn(unscaled_images, depths=[16,32,32], **conv_kwargs):
     return out
 
 
+@register("cnn2x")
+def cnn2x(imagesize=(128, 64, 3), type_vec_dim=6, fc_dim=128, activation=tf.tanh, **conv_kwargs):
+    """
+    2 images as input with a type vector
+    """
+    def decode(X):
+        batch = X.shape[0].value
+        image_dim = imagesize[0] * imagesize[1] * imagesize[2]
+        batch_imagesize = (batch, ) + imagesize
+        assert X.shape[1].value == (image_dim + type_vec_dim)
+
+        image = X[:, 0 : image_dim]
+        image = tf.reshape(image, batch_imagesize)
+        type_vec = X[:, image_dim : ]
+
+        return image, type_vec
+
+    def network_fn(X):
+        image, type_vec = decode(X)
+        feats = []
+
+        feat_img = nature_cnn(image, **conv_kwargs)
+        tf.expand_dims(feat_img, 1)
+        feats.append(feat_img)
+
+        type_vec = tf.layers.flatten(type_vec)
+        feat_vec = fc(type_vec, 'mlp_fc', nh=fc_dim, init_scale=np.sqrt(2))
+        feat_vec = activation(feat_vec)
+        feats.append(feat_vec)
+
+        output = tf.concat(feats, axis=1)
+        return output
+
+    return network_fn
+
+
 @register("mlp")
 def mlp(num_layers=2, num_hidden=64, activation=tf.tanh, layer_norm=False):
     """
