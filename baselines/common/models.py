@@ -12,6 +12,23 @@ def register(name):
         return func
     return _thunk
 
+def cnn_typeVector(concat_vector, **kwargs):
+    scaled_images = concat_vector[:, :-6]
+    type_vector = concat_vector[:, -6:]
+
+    batch = tf.shape(scaled_images)[0]
+    scaled_images = tf.reshape(scaled_images, [batch, 64, 64, 4])
+
+    activ = tf.nn.relu
+    layer_1 = activ(conv(scaled_images, 'c1', nf=32, rf=8, stride=4, init_scale=np.sqrt(2), **kwargs))
+    layer_2 = activ(conv(layer_1, 'c2', nf=64, rf=4, stride=2, init_scale=np.sqrt(2), **kwargs))
+    layer_3 = activ(conv(layer_2, 'c3', nf=64, rf=3, stride=1, init_scale=np.sqrt(2), **kwargs))
+    layer_3 = conv_to_fc(layer_3)
+    layer_4 = linear(type_vector, 'fc0', n_hidden=64, init_scale=np.sqrt(2))
+    layer_5 = tf.concat(axis=1, values=[layer_3, layer_4])
+
+    return activ(linear(layer_5, 'fc1', n_hidden=512, init_scale=np.sqrt(2)))
+
 def nature_cnn(unscaled_images, **conv_kwargs):
     """
     CNN from Nature paper.
@@ -143,6 +160,13 @@ def mlp(num_layers=2, num_hidden=64, activation=tf.tanh, layer_norm=False):
 def cnn(**conv_kwargs):
     def network_fn(X):
         return nature_cnn(X, **conv_kwargs)
+    return network_fn
+
+@register("cnn_type")
+def cnn_type(**conv_kwargs):
+    def network_fn(X):
+        return cnn_typeVector(X, **conv_kwargs)
+
     return network_fn
 
 @register("impala_cnn")
