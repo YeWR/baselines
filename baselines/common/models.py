@@ -27,7 +27,7 @@ def cnn_typeVector(concat_vector, **kwargs):
     layer_4 = fc(type_vector, 'fc0', nh=64, init_scale=np.sqrt(2))
     layer_5 = tf.concat(axis=1, values=[layer_3, layer_4])
 
-    return activ(linear(layer_5, 'fc1', n_hidden=512, init_scale=np.sqrt(2)))
+    return activ(fc(layer_5, 'fc1', nh=512, init_scale=np.sqrt(2)))
 
 def nature_cnn(unscaled_images, **conv_kwargs):
     """
