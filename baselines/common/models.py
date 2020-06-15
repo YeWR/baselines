@@ -19,7 +19,8 @@ def cnn_typeVector(concat_vector, **kwargs):
     batch = tf.shape(scaled_images)[0]
     scaled_images = tf.reshape(scaled_images, [batch, 64, 64, 4])
 
-    activ = tf.nn.relu
+    # activ = tf.nn.relu
+    activ = tf.nn.tanh
     layer_1 = activ(conv(scaled_images, 'c1', nf=32, rf=8, stride=4, init_scale=np.sqrt(2), **kwargs))
     layer_2 = activ(conv(layer_1, 'c2', nf=64, rf=4, stride=2, init_scale=np.sqrt(2), **kwargs))
     layer_3 = activ(conv(layer_2, 'c3', nf=64, rf=3, stride=1, init_scale=np.sqrt(2), **kwargs))
@@ -34,7 +35,8 @@ def nature_cnn(unscaled_images, **conv_kwargs):
     CNN from Nature paper.
     """
     scaled_images = tf.cast(unscaled_images, tf.float32) / 255.
-    activ = tf.nn.relu
+    # activ = tf.nn.relu
+    activ = tf.nn.tanh
     h = activ(conv(scaled_images, 'c1', nf=32, rf=8, stride=4, init_scale=np.sqrt(2),
                    **conv_kwargs))
     h2 = activ(conv(h, 'c2', nf=64, rf=4, stride=2, init_scale=np.sqrt(2), **conv_kwargs))
